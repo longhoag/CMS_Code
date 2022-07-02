@@ -70,10 +70,39 @@ string highestPtCombination(float mmPt, float eePt, float emPt) {
     result = "invalid";
   }
 
-  return result;
+  return result; 
 }
 
 //-- b-tagging
+int findMatched(Double_t pat1_eta, Double_t pat1_phi, Double_t pat2_eta, Double_t pat2_phi, Double_t p_eta, Double_t p_phi) {
+  int count = 0;
+  Double_t x = pat1_eta - p_eta;
+  Double_t x2 = x * x;
+  Double_t y = pat1_phi - p_phi;
+  Double_t y2 = y * y;
+
+  Double_t u = pat2_eta - p_eta;
+  Double_t u2 = u * u;
+  Double_t v = pat2_phi - p_phi;
+  Double_t v2 = v * v;
+
+  if(TMath::Sqrt(x2 + y2) < 0.15) {
+    count++;
+  }
+  if(TMath::Sqrt(u2 + v2) < 0.15) {
+    count++;
+  }
+
+  return count;
+}
+
+class Muo {
+  public:
+    Double_t eta1;
+    Double_t phi1;
+    Double_t eta2;
+    Double_t phi2;
+};
 
 int main(int argc, char* argv[]) {
   // define what particle you are using; this is necessary as FWLite is not capable of reading edm::Views
@@ -90,6 +119,8 @@ int main(int argc, char* argv[]) {
   using pat::Jet;
   using pat::MET;
 
+  Muo muo;
+
   int num0 = 0;
   int num1 = 0;
 
@@ -102,6 +133,9 @@ int main(int argc, char* argv[]) {
   int invalid = 0;
 
   int bFound = 0;
+
+  int matched = 0;
+  int matchedInLoop = 0;
   
   // ---------------------upcoming-----------------------------------------
   //  * enable FWLite 
@@ -235,25 +269,25 @@ int main(int argc, char* argv[]) {
 
   //--Implement b-tagging
 
-  enum Flavour {
-    ALL_JETS = 0,
-    UDSG_JETS,
-    C_JETS,
-    B_JETS,
-    NONID_JETS,
-    N_JET_TYPES
-  };
+  // enum Flavour {
+  //   ALL_JETS = 0,
+  //   UDSG_JETS,
+  //   C_JETS,
+  //   B_JETS,
+  //   NONID_JETS,
+  //   N_JET_TYPES
+  // };
 
   //--configuration parameters
 
   double jetPtCut_ = 30; //-- minimum (uncorrected) jet energy
   double jetEtaCut_ = 2.4;//-- maximum |eta| for jet
 
-  TH1* flavours_;
+  //TH1* flavours_;
 
-  struct Plots {
-    TH1 *discrTC, *discrSSV, *discrCSV;
-  } plots_[N_JET_TYPES];
+  // struct Plots {
+  //   TH1 *discrTC, *discrSSV, *discrCSV;
+  // } plots_[N_JET_TYPES];
   //--
 
 
@@ -293,10 +327,6 @@ int main(int argc, char* argv[]) {
         Handle<vector<Jet>> jets;
         event.getByLabel(string("slimmedJets"), jets);
 
-        //-- jet collection for b-tagging?
-        //   
-        //-- 
-
         Handle<vector<Jet>> AK8jets;
         event.getByLabel(string("slimmedJetsAK8"), AK8jets);
 
@@ -305,12 +335,8 @@ int main(int argc, char* argv[]) {
         event.getByLabel(string("slimmedMETs"), mets);
 
         // Handle to the genparticle collection
-        // Handle<reco::GenParticleCollection> genParticlesHandle_;
-        // event.getByLabel("genParticles", genParticlesHandle_);
-
         Handle<vector<GenParticle>> genParticles;
         event.getByLabel(string("prunedGenParticles"), genParticles);
-
 
         Int_t runnum = event.id().run();
         Int_t evnum = event.id().event();
@@ -340,8 +366,12 @@ int main(int argc, char* argv[]) {
           before_muonVY_->Fill(mu1->vy());
           before_muonVZ_->Fill(mu1->vz());
         }
-        //MET_all_->Fill((mets->front()).sumEt());
 
+        // Double_t mu1eta = 0;
+        // Double_t mu1phi = 0;
+        // Double_t mu2eta = 0;
+        // Double_t mu2phi = 0;
+        
         //-- get 2 highest pt and oposite charges 
         for(vector<Muon>::const_iterator mu1 = muons->begin(); mu1 != muons->end(); mu1++) {
           //-- high Pt
@@ -363,7 +393,7 @@ int main(int argc, char* argv[]) {
                   if(mu1->charge() * mu2->charge() < 0) {
 
                     diMuon++;
-
+                  
                     muonPt_->Fill(mu1->pt());
                     muonEta_->Fill(mu1->eta());
                     muonPhi_->Fill(mu1->phi());	
@@ -382,6 +412,36 @@ int main(int argc, char* argv[]) {
                     smu2 = mu2;
 
                     mmSumPt = mu1->pt() + mu2->pt();
+
+                    muo.eta1 = mu1->eta();
+                    muo.phi1 = mu1->phi();
+                    muo.eta2 = mu2->eta();
+                    muo.phi2 = mu2->phi();
+
+                    for (vector<GenParticle>::const_iterator gp = genParticles->begin(); gp != genParticles->end(); ++gp) {
+                      const Candidate *p = (const Candidate*)&(*gp);
+                      
+                      if(p->pdgId() == 13) {
+
+                        Double_t x = mu1->eta() - p->eta();
+                        Double_t x2 = x * x;
+                        Double_t y = mu1->phi() - p->phi();
+                        Double_t y2 = y * y;
+
+                        Double_t u = mu2->eta() - p->eta();
+                        Double_t u2 = u * u;
+                        Double_t v = mu2->phi() - p->phi();
+                        Double_t v2 = v * v;
+
+                        if(TMath::Sqrt(x2 + y2) < 0.15) {
+                          matchedInLoop++;
+                        }
+                        if(TMath::Sqrt(u2 + v2) < 0.15) {
+                          matchedInLoop++;
+                        }
+                      }
+                    }
+
                     break;
                   }
                 }
@@ -398,9 +458,6 @@ int main(int argc, char* argv[]) {
         int diElectron = 0;
 
         float eeSumPt = -666.0;
-        //---plot before selection------
-        //
-        //-------------------------
         for(vector<Electron>::const_iterator e1 = electrons->begin(); e1 != electrons->end(); e1++) {
           //-- high pt 
           if(e1->pt() > 20 && fabs(e1->eta()) < 2.1 && e1->dr03TkSumPt() < 0.1) { 
@@ -533,81 +590,88 @@ int main(int argc, char* argv[]) {
         }
         AK8_Njets_all_->Fill(n_ak8);
 
-
         //-- B TAGGING
-
         // book histograms for all jet flavours
+        // for(vector<Jet>::const_iterator jet = jets->begin(); jet != jets->end(); jet++) {
+        //   //--only look at jets that pass the pt and eta cut
+        //   if(jet->pt() < jetPtCut_ || abs(jet->eta()) > jetEtaCut_) {
+        //     continue;
+        //   }
 
-        for(vector<Jet>::const_iterator jet = jets->begin(); jet != jets->end(); jet++) {
-          //--only look at jets that pass the pt and eta cut
-          if(jet->pt() < jetPtCut_ || abs(jet->eta()) > jetEtaCut_) {
-            continue;
-          }
+        //   Flavour flavour;
+        //   //-- find out the jet flavour (differ between quark and anti quark)
+        //   switch(abs(jet->partonFlavour())) {
+        //     case 1:
+        //     case 2:
+        //     case 3:
+        //     case 21:
+        //       flavour = UDSG_JETS;
+        //       break;
+        //     case 4:
+        //       flavour = C_JETS;
+        //       break;
+        //     case 5:
+        //       flavour = B_JETS;
+        //       break;
+        //     default:
+        //       flavour = NONID_JETS;
+        //   }
 
-          Flavour flavour;
-          //-- find out the jet flavour (differ between quark and anti quark)
-          switch(abs(jet->partonFlavour())) {
-            case 1:
-            case 2:
-            case 3:
-            case 21:
-              flavour = UDSG_JETS;
-              break;
-            case 4:
-              flavour = C_JETS;
-              break;
-            case 5:
-              flavour = B_JETS;
-              break;
-            default:
-              flavour = NONID_JETS;
-          }
-
-          //-- simply count the number of accepted jets 
-          // flavours_->Fill(ALL_JETS);
-          // flavours_->Fill(flavour);
+        //   //-- simply count the number of accepted jets 
+        //   flavours_->Fill(ALL_JETS);
+        //   flavours_->Fill(flavour);
           
-          cout << "ALL JETS : " << ALL_JETS << endl;
-          cout << "FLAVOUR : " << flavour << endl;
+        //   // cout << "ALL JETS : " << ALL_JETS << endl;
+        //   // cout << "FLAVOUR : " << flavour << endl;
 
-          double discrTC = jet->bDiscriminator("trackCountingHighEffBJetTags");
-          double discrSSV = jet->bDiscriminator("simpleSecondaryVertexBJetTags");
-          double discrCSV = jet->bDiscriminator("combinedSecondaryVertexBJetTags");
+        //   double discrTC = jet->bDiscriminator("trackCountingHighEffBJetTags");
+        //   double discrSSV = jet->bDiscriminator("simpleSecondaryVertexBJetTags");
+        //   double discrCSV = jet->bDiscriminator("combinedSecondaryVertexBJetTags");
 
+        //   // cout << "discrTC = " << discrTC << endl;
+        //   // cout << "discrSSV = " << discrSSV << endl;
+        //   // cout << "discrCSV = " << discrCSV << endl;
 
-          // cout << "discrTC = " << discrTC << endl;
-          // cout << "discrSSV = " << discrSSV << endl;
-          // cout << "discrCSV = " << discrCSV << endl;
-          // vector<reco::GenParticleRef> associatedGenParticles = jet.genParticleRefs();
-          // for(vector<reco::GenParticleRef>::const_iterator it = associatedGenParticles.begin(); it != associatedGenParticles.end(); ++it ) {
-          //   if(it->isAvailable()) {
-              //const reco::GenParticleRef& genParticle = (*it);
-              if (jet->pdgId() == 5) {
-                bFound++;
-              }
-            //}
-          //}
-
-        }
-
-
-        //- btaging test
-
-        for (vector<GenParticle>::const_iterator ip = genParticles->begin(); ip!=genParticles->end(); ++ip) {
-          const Candidate *p = (const Candidate*)&(*ip);
-          
-          cout << "ID : " << p->pdgId() << endl;
-        }
-      
-        // for(size_t i = 0; i < genParticles->size(); ++ i) {
-        //   const GenParticle & p = (*genParticles)[i];
-        //   int id = p.pdgId();
-        //   int st = p.status();  
-
-        //   cout << "PARTICLE ID: " << id << endl;
         // }
 
+        //- find b in generator
+        for (vector<GenParticle>::const_iterator gp = genParticles->begin(); gp != genParticles->end(); ++gp) {
+          const Candidate *p = (const Candidate*)&(*gp);
+          
+          if(p->pdgId() == 5) {
+            bFound++;
+          }
+        }
 
+        //-- for MCTruthDeltaRMatcher muons
+        for (vector<GenParticle>::const_iterator gp = genParticles->begin(); gp != genParticles->end(); ++gp) {
+          const Candidate *p = (const Candidate*)&(*gp);
+          
+          if(p->pdgId() == 13) {
+
+            matched += findMatched(muo.eta1, muo.phi1, muo.eta2, muo.phi2, p->eta(), p->phi());
+            // Double_t x = smu1->eta(); //- p->eta();
+            // Double_t x2 = x * x;
+            // Double_t y = smu1->phi() - p->phi();
+            // Double_t y2 = y * y;
+
+            //cout << x;
+
+            // Double_t u = smu2->eta() - p->eta();
+            // Double_t u2 = u * u;
+            // Double_t v = smu2->phi() - p->phi();
+            // Double_t v2 = v * v;
+
+            // if(TMath::Sqrt(x2 + y2) < 0.15) {
+            //   matched++;
+            // }
+            // if(TMath::Sqrt(u2 + v2) < 0.15) {
+            //   matched++;
+            // }
+
+          }
+        }
+        
         // loop tyhorugh 2 hiest pat and compare them to get the angle between 1 vs gen particle (same type) if the angle smaller than 0.2 -> matched and then find their parent W or not?
         //-- highest ee, m , em event
         string highest = highestPtCombination(mmSumPt, eeSumPt, emSumPt);
@@ -650,5 +714,10 @@ int main(int argc, char* argv[]) {
 
   cout << "Number of b found: " << bFound << endl;
 
+  cout << "Matched Muons: " << matched << endl;
+
+  cout << "Matched Muons in loop : " << matchedInLoop << endl;
+
   return 0;
 }
+
