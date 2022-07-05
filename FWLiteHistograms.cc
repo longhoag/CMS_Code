@@ -136,6 +136,8 @@ int main(int argc, char* argv[]) {
 
   int matched = 0;
   int matchedInLoop = 0;
+
+  int wMother = 0;
   
   // ---------------------upcoming-----------------------------------------
   //  * enable FWLite 
@@ -356,7 +358,6 @@ int main(int argc, char* argv[]) {
 	      vector<Electron>::const_iterator se;
 
         float mmSumPt = -666.0;
-
         for(vector<Muon>::const_iterator mu1 = muons->begin(); mu1 != muons->end(); mu1++) {
           //--plotting
           before_muonPt_->Fill(mu1->pt());
@@ -366,11 +367,6 @@ int main(int argc, char* argv[]) {
           before_muonVY_->Fill(mu1->vy());
           before_muonVZ_->Fill(mu1->vz());
         }
-
-        // Double_t mu1eta = 0;
-        // Double_t mu1phi = 0;
-        // Double_t mu2eta = 0;
-        // Double_t mu2phi = 0;
         
         //-- get 2 highest pt and oposite charges 
         for(vector<Muon>::const_iterator mu1 = muons->begin(); mu1 != muons->end(); mu1++) {
@@ -558,7 +554,6 @@ int main(int argc, char* argv[]) {
 
         //--JET LOOP
         int n_jets = 0;
-
         for(vector<Jet>::const_iterator j = jets->begin(); j != jets->end(); j++) {
           if(j->pt() > 20 && fabs(j->eta()) < 2.1) {
             n_jets++;
@@ -648,7 +643,6 @@ int main(int argc, char* argv[]) {
           const Candidate *p = (const Candidate*)&(*gp);
           
           if(p->pdgId() == 13) {
-
             matched += findMatched(muo.eta1, muo.phi1, muo.eta2, muo.phi2, p->eta(), p->phi());
             // Double_t x = smu1->eta(); //- p->eta();
             // Double_t x2 = x * x;
@@ -668,8 +662,20 @@ int main(int argc, char* argv[]) {
             // if(TMath::Sqrt(u2 + v2) < 0.15) {
             //   matched++;
             // }
-
           }
+        }
+
+        for (vector<GenParticle>::const_iterator gp = genParticles->begin(); gp != genParticles->end(); ++gp) {
+          const Candidate *p = (const Candidate*)&(*gp);
+          
+          //-- muons
+          if(p->pdgId() == 13) {
+            const Candidate *mom = p->mother();
+            if(mom->pdgId() == 34) {
+              wMother++;
+            }
+          }
+
         }
         
         // loop tyhorugh 2 hiest pat and compare them to get the angle between 1 vs gen particle (same type) if the angle smaller than 0.2 -> matched and then find their parent W or not?
@@ -717,6 +723,8 @@ int main(int argc, char* argv[]) {
   cout << "Matched Muons: " << matched << endl;
 
   cout << "Matched Muons in loop : " << matchedInLoop << endl;
+
+  cout << "Number of W mother from muons: " << wMother << endl;
 
   return 0;
 }
