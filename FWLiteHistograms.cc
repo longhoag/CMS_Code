@@ -253,6 +253,9 @@ int main(int argc, char* argv[]) {
   TH1F* AK8_Njets_all_ = dir.make<TH1F>("AK8_Njets_all_", "AK8_Njets", 11, 0., 11.);
 
   TH1F* DeltaR_elec_ = dir.make<TH1F>("DeltaR_Elec", "R", 100, 0., 10.); 
+  TH1F* DeltaR_muon_ = dir.make<TH1F>("DeltaR_Muon", "R", 100, 0., 10.);
+
+  TH1F* N_Gen_b_ = dir.make<TH1F>("Generator_b", "number", 15, 0., 15.);
 
   //-NTuple file/branches
   TFile* ofile = new TFile(outputNtuple_.c_str(),"RECREATE");
@@ -349,6 +352,9 @@ int main(int argc, char* argv[]) {
         int n_muons = 0;
         int diMuon = 0;
 
+        //-- b in an event
+        int b = 0;
+
         //-- selected object for NTuple
         vector<Muon>::const_iterator smu1;
 	      vector<Muon>::const_iterator smu2;
@@ -388,56 +394,64 @@ int main(int argc, char* argv[]) {
                   //-- opposite charge
                   if(mu1->charge() * mu2->charge() < 0) {
 
-                    diMuon++;
-                  
-                    muonPt_->Fill(mu1->pt());
-                    muonEta_->Fill(mu1->eta());
-                    muonPhi_->Fill(mu1->phi());	
-                    muonVX_->Fill(mu1->vx());
-                    muonVY_->Fill(mu1->vy());
-                    muonVZ_->Fill(mu1->vz());
+                    Double_t metadiff = mu1->eta() - mu2->eta();
+                    Double_t metadiff2 = metadiff * metadiff;
+                    Double_t mphidiff = mu1->phi() - mu2->phi();
+                    Double_t mphidiff2 = mphidiff * mphidiff;
+//0.2
+                    if(TMath::Sqrt(metadiff2 + mphidiff2) > 0.3) {
+                      DeltaR_muon_->Fill(TMath::Sqrt(metadiff2 + mphidiff2));
 
-                    muonPt_->Fill(mu2->pt());
-                    muonEta_->Fill(mu2->eta());
-                    muonPhi_->Fill(mu2->phi());	
-                    muonVX_->Fill(mu2->vx());
-                    muonVY_->Fill(mu2->vy());
-                    muonVZ_->Fill(mu2->vz());
+                      diMuon++;
+                    
+                      muonPt_->Fill(mu1->pt());
+                      muonEta_->Fill(mu1->eta());
+                      muonPhi_->Fill(mu1->phi());	
+                      muonVX_->Fill(mu1->vx());
+                      muonVY_->Fill(mu1->vy());
+                      muonVZ_->Fill(mu1->vz());
 
-                    smu1 = mu1;
-                    smu2 = mu2;
+                      muonPt_->Fill(mu2->pt());
+                      muonEta_->Fill(mu2->eta());
+                      muonPhi_->Fill(mu2->phi());	
+                      muonVX_->Fill(mu2->vx());
+                      muonVY_->Fill(mu2->vy());
+                      muonVZ_->Fill(mu2->vz());
 
-                    mmSumPt = mu1->pt() + mu2->pt();
+                      smu1 = mu1;
+                      smu2 = mu2;
 
-                    muo.eta1 = mu1->eta();
-                    muo.phi1 = mu1->phi();
-                    muo.eta2 = mu2->eta();
-                    muo.phi2 = mu2->phi();
+                      mmSumPt = mu1->pt() + mu2->pt();
 
-                    for (vector<GenParticle>::const_iterator gp = genParticles->begin(); gp != genParticles->end(); ++gp) {
-                      const Candidate *p = (const Candidate*)&(*gp);
-                      
-                      if(p->pdgId() == 13) {
+                      muo.eta1 = mu1->eta();
+                      muo.phi1 = mu1->phi();
+                      muo.eta2 = mu2->eta();
+                      muo.phi2 = mu2->phi();
 
-                        Double_t x = mu1->eta() - p->eta();
-                        Double_t x2 = x * x;
-                        Double_t y = mu1->phi() - p->phi();
-                        Double_t y2 = y * y;
+                      for (vector<GenParticle>::const_iterator gp = genParticles->begin(); gp != genParticles->end(); ++gp) {
+                        const Candidate *p = (const Candidate*)&(*gp);
+                        
+                        if(p->pdgId() == 13 || p->pdgId() == -13) {
 
-                        Double_t u = mu2->eta() - p->eta();
-                        Double_t u2 = u * u;
-                        Double_t v = mu2->phi() - p->phi();
-                        Double_t v2 = v * v;
+                          Double_t x = mu1->eta() - p->eta();
+                          Double_t x2 = x * x;
+                          Double_t y = mu1->phi() - p->phi();
+                          Double_t y2 = y * y;
 
-                        if(TMath::Sqrt(x2 + y2) < 0.15) {
-                          matchedInLoop++;
-                        }
-                        if(TMath::Sqrt(u2 + v2) < 0.15) {
-                          matchedInLoop++;
+                          Double_t u = mu2->eta() - p->eta();
+                          Double_t u2 = u * u;
+                          Double_t v = mu2->phi() - p->phi();
+                          Double_t v2 = v * v;
+
+                          if(TMath::Sqrt(x2 + y2) < 0.15) {
+                            matchedInLoop++;
+                          }
+                          if(TMath::Sqrt(u2 + v2) < 0.15) {
+                            matchedInLoop++;
+                          }
                         }
                       }
                     }
-
                     break;
                   }
                 }
@@ -497,7 +511,7 @@ int main(int argc, char* argv[]) {
                     Double_t eetadiff2 = eetadiff * eetadiff;
                     Double_t ephidiff = e1->phi() - e2->phi();
                     Double_t ephidiff2 = ephidiff * ephidiff;
-                    //..0.2
+
                     if(TMath::Sqrt(eetadiff2 + ephidiff2) > 2.4) {
                       DeltaR_elec_->Fill(TMath::Sqrt(eetadiff2 + ephidiff2));
                     }
@@ -630,19 +644,19 @@ int main(int argc, char* argv[]) {
         // }
 
         //- find b in generator
-        for (vector<GenParticle>::const_iterator gp = genParticles->begin(); gp != genParticles->end(); ++gp) {
-          const Candidate *p = (const Candidate*)&(*gp);
+        // for (vector<GenParticle>::const_iterator gp = genParticles->begin(); gp != genParticles->end(); ++gp) {
+        //   const Candidate *p = (const Candidate*)&(*gp);
           
-          if(p->pdgId() == 5) {
-            bFound++;
-          }
-        }
+        //   if(p->pdgId() == 5 || p->pdgId() == -5) {
+        //     bFound++;
+        //   }
+        // }
 
         //-- for MCTruthDeltaRMatcher muons
         for (vector<GenParticle>::const_iterator gp = genParticles->begin(); gp != genParticles->end(); ++gp) {
           const Candidate *p = (const Candidate*)&(*gp);
           
-          if(p->pdgId() == 13) {
+          if(p->pdgId() == 13 || p->pdgId() == -13) {
             matched += findMatched(muo.eta1, muo.phi1, muo.eta2, muo.phi2, p->eta(), p->phi());
             // Double_t x = smu1->eta(); //- p->eta();
             // Double_t x2 = x * x;
@@ -671,7 +685,7 @@ int main(int argc, char* argv[]) {
           //-- muons
           if(p->pdgId() == 13) {
             const Candidate *mom = p->mother();
-            if(mom->pdgId() == 34) {
+            if(mom->pdgId() == 24) {
               wMother++;
             }
           }
@@ -697,6 +711,17 @@ int main(int argc, char* argv[]) {
           invalid++;
         }
 
+        if(highest != "invalid") {
+          for (vector<GenParticle>::const_iterator gp = genParticles->begin(); gp != genParticles->end(); ++gp) {
+          const Candidate *p = (const Candidate*)&(*gp);
+          
+            if(p->pdgId() == 5 || p->pdgId() == -5) {
+              bFound++;
+              b++;
+            }
+            N_Gen_b_->Fill(b);
+          }
+        }
       }
       ofile->Write();
       ofile->Close();
