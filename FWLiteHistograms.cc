@@ -73,29 +73,6 @@ string highestPtCombination(float mmPt, float eePt, float emPt) {
   return result; 
 }
 
-//-- b-tagging
-int findMatched(Double_t pat1_eta, Double_t pat1_phi, Double_t pat2_eta, Double_t pat2_phi, Double_t p_eta, Double_t p_phi) {
-  int count = 0;
-  Double_t x = pat1_eta - p_eta;
-  Double_t x2 = x * x;
-  Double_t y = pat1_phi - p_phi;
-  Double_t y2 = y * y;
-
-  Double_t u = pat2_eta - p_eta;
-  Double_t u2 = u * u;
-  Double_t v = pat2_phi - p_phi;
-  Double_t v2 = v * v;
-
-  if(TMath::Sqrt(x2 + y2) < 0.15) {
-    count++;
-  }
-  if(TMath::Sqrt(u2 + v2) < 0.15) {
-    count++;
-  }
-
-  return count;
-}
-
 Double_t deltaRvalue(Double_t eta1, Double_t eta2, Double_t phi1, Double_t phi2) {
   Double_t etadiff = eta1 - eta2;
   Double_t etadiff2 = etadiff * etadiff;
@@ -395,27 +372,17 @@ int main(int argc, char* argv[]) {
               //-- next index
               if(mu2 > mu1) {
                 if(mu2->pt() > 20 && fabs(mu2->eta()) < 2.1 && mu2->isolationR03().sumPt < 0.1) { 
-                  //--check sort
-                  if(mu1->pt() > mu2->pt()) {
-                    num0++;
-                  }
-                  else {
-                    num1++;
-                  }
-                  //-- are we gonna count all the pairs?
                   //-- opposite charge
                   if(mu1->charge() * mu2->charge() < 0) {
-                    //-- vs jet pat delta R
-                    for(vector<Jet>::const_iterator jet = jets->begin(); jet != jets->end(); jet++) {
+                    Double_t deltaR = deltaRvalue(mu1->eta(), mu2->eta(), mu1->phi(), mu2->phi());
+                    if(deltaR > 0.3) {
+                      //-- vs jet pat delta R
+                      for(vector<Jet>::const_iterator jet = jets->begin(); jet != jets->end(); jet++) {
                       Double_t muon1jet = deltaRvalue(mu1->eta(), jet->eta(), mu1->phi(), jet->phi());
                       Double_t muon2jet = deltaRvalue(mu2->eta(), jet->eta(), mu2->phi(), jet->phi());
                       //-- cut that matched 
-                      if(muon1jet > 0.2 && muon2jet > 0.2) {
-                        //muojet++;
-                        Double_t deltaR = deltaRvalue(mu1->eta(), mu2->eta(), mu1->phi(), mu2->phi());
-
-                        if(deltaR > 0.3) {
-
+                        if(muon1jet < 0.2 && muon2jet < 0.2) {
+                          //muojet++;
                           DeltaR_muon_->Fill(deltaR);
 
                           diMuon++;
@@ -459,20 +426,6 @@ int main(int argc, char* argv[]) {
                                 matchedInLoop++;
                               }
                             }
-
-                            //-- vs jet gen delta R
-                            //   if(abs(p->pdgId()) == 1 || abs(p->pdgId()) == 2 || abs(p->pdgId()) == 3 || abs(p->pdgId()) == 4 || abs(p->pdgId()) == 5 || abs(p->pdgId()) == 6) {
-                            //     Double_t muon1genjet = deltaRvalue(mu1->eta(), p->eta(), mu1->phi(), p->phi());
-                            //     Double_t muon2genjet = deltaRvalue(mu2->eta(), p->eta(), mu2->phi(), p->phi());
-                            //     //-------- <  ?? >
-                            //     if(muon1genjet < 0.2) {
-                            //       muoGenJet++;
-                            //     }
-                            //     if(muon2genjet < 0.2) {
-                            //       muoGenJet++;
-                            //     }
-                            //   }
-                            // }
                           }
                           break;
                         }
@@ -740,7 +693,7 @@ int main(int argc, char* argv[]) {
 
   cout << "Number of b found: " << bFound << endl;
 
-  cout << "Matched Muons: " << matched << endl;
+ // cout << "Matched Muons: " << matched << endl;
 
   cout << "Matched Muons in loop : " << matchedInLoop << endl;
 
