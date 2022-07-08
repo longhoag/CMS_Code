@@ -381,7 +381,7 @@ int main(int argc, char* argv[]) {
                       Double_t muon1jet = deltaRvalue(mu1->eta(), jet->eta(), mu1->phi(), jet->phi());
                       Double_t muon2jet = deltaRvalue(mu2->eta(), jet->eta(), mu2->phi(), jet->phi());
                       //-- cut that matched 
-                        if(muon1jet < 0.2 && muon2jet < 0.2) {
+                        if(muon1jet > 0.2 && muon2jet > 0.2) {
                           //muojet++;
                           DeltaR_muon_->Fill(deltaR);
 
@@ -511,28 +511,34 @@ int main(int argc, char* argv[]) {
               if(mu->pt() > 20 && fabs(mu->eta()) < 2.1 && mu->isolationR03().sumPt < 0.1) {
                 //--check opposite charge 
                 if(e->charge() * mu->charge() < 0) {
-                  diElecMuon++;
+                  //-- cut things in the same direction as the jets
+                  for(vector<Jet>::const_iterator jet = jets->begin(); jet != jets->end(); jet++) {
+                    Double_t muonjet = deltaRvalue(mu->eta(), jet->eta(), mu->phi(), jet->phi());
+                    if(muonjet > 0.2) {
+                      diElecMuon++;
 
-                  elec_muonPt_->Fill(e->pt());
-                  elec_muonEta_->Fill(e->eta());
-                  elec_muonPhi_->Fill(e->phi());	
-                  elec_muonVX_->Fill(e->vx());
-                  elec_muonVY_->Fill(e->vy());
-                  elec_muonVZ_->Fill(e->vz());
+                      elec_muonPt_->Fill(e->pt());
+                      elec_muonEta_->Fill(e->eta());
+                      elec_muonPhi_->Fill(e->phi());	
+                      elec_muonVX_->Fill(e->vx());
+                      elec_muonVY_->Fill(e->vy());
+                      elec_muonVZ_->Fill(e->vz());
 
-                  elec_muonPt_->Fill(mu->pt());
-                  elec_muonEta_->Fill(mu->eta());
-                  elec_muonPhi_->Fill(mu->phi());	
-                  elec_muonVX_->Fill(mu->vx());
-                  elec_muonVY_->Fill(mu->vy());
-                  elec_muonVZ_->Fill(mu->vz());
+                      elec_muonPt_->Fill(mu->pt());
+                      elec_muonEta_->Fill(mu->eta());
+                      elec_muonPhi_->Fill(mu->phi());	
+                      elec_muonVX_->Fill(mu->vx());
+                      elec_muonVY_->Fill(mu->vy());
+                      elec_muonVZ_->Fill(mu->vz());
 
-                  smu = mu;
-                  se = e;
-                  
-                  emSumPt = e->pt() + mu->pt();
-                  
-                  break;
+                      smu = mu;
+                      se = e;
+                      
+                      emSumPt = e->pt() + mu->pt();
+                      
+                      break;
+                    }
+                  }
                 }
               }
             }
