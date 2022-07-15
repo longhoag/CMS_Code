@@ -6,7 +6,7 @@
 #include <sstream>
 #include <fstream>
 #include <iostream>
- 
+
 #include <TH1F.h>
 #include <TROOT.h>
 #include <TFile.h>
@@ -179,7 +179,7 @@ int main(int argc, char* argv[]) {
   //TH1F* mumuMass12_= dir.make<TH1F>("mumuMass12", "mass", 90,  60., 120.);
   TH1F* Nmuons_all_ = dir.make<TH1F>("Nmuons_all", "N",   11,  0.,  11.);
   TH1F* Nmuons_mumuSEL_ = dir.make<TH1F>("Nmuons_mumuSEL", "N", 11,  0.,  11.);
-  //TH1F* MET_mumuSEL_ = dir.make<TH1F>("MET_mumuSEL", "N", 100, 0., 2400.);
+  TH1F* MET_mumuSEL_ = dir.make<TH1F>("MET_mumuSEL", "N", 100, 0., 2400.);
   //TH1F* MET_all_ = dir.make<TH1F>("MET_all", "N", 100, 0., 300.);
 
   //--electron
@@ -194,7 +194,7 @@ int main(int argc, char* argv[]) {
   //TH1F* eeMass_= dir.make<TH1F>("eeMass", "mass", 90,   30., 120.);
   TH1F* Nelectrons_all_ = dir.make<TH1F>("Nelectrons_all", "N", 11, 0., 11.);
   TH1F* Nelectrons_eeSEL_ = dir.make<TH1F>("Nelectrons_eeSEL", "N", 11,  0.,  11.);
-  //TH1F* MET_eeSEL_ = dir.make<TH1F>("MET_eeSEL", "N", 100, 0., 2400.);
+  TH1F* MET_eeSEL_ = dir.make<TH1F>("MET_eeSEL", "N", 100, 0., 2400.);
 
   //--electron Muon 
   TH1F* elec_muonPt_ = dir.make<TH1F>("elec_muonPt", "pt", 100, 0., 300.);
@@ -206,6 +206,8 @@ int main(int argc, char* argv[]) {
   TH1F* elec_muonVX_ = dir.make<TH1F>("elec_muonVX", "vx",  100,  -0.5,  0.5);
   TH1F* elec_muonVY_ = dir.make<TH1F>("elec_muonVY", "vy",  100,  -0.5,  0.5);
   TH1F* elec_muonVZ_ = dir.make<TH1F>("elec_muonVZ", "vz",  100,  -30.,  30.);
+  TH1F* MET_emuSEL_  = dir.make<TH1F>("MET_emuSEL", "N",    100,  0.,  2400.);
+
 
 
   //-- Test sorting algorithm 
@@ -366,12 +368,12 @@ int main(int argc, char* argv[]) {
         //-- get 2 highest pt and oposite charges 
         for(vector<Muon>::const_iterator mu1 = muons->begin(); mu1 != muons->end(); mu1++) {
           //-- high Pt
-          if(mu1->pt() > 20 && fabs(mu1->eta()) < 2.1 && mu1->isolationR03().sumPt < 0.1) { 
+          if(mu1->pt() > 20 && fabs(mu1->eta()) < 2.4 && mu1->isolationR03().sumPt < 0.1) { 
             n_muons++;
             for(vector<Muon>::const_iterator mu2 = muons->begin(); mu2 != muons->end(); mu2++) {
               //-- next index
               if(mu2 > mu1) {
-                if(mu2->pt() > 20 && fabs(mu2->eta()) < 2.1 && mu2->isolationR03().sumPt < 0.1) { 
+                if(mu2->pt() > 20 && fabs(mu2->eta()) < 2.4 && mu2->isolationR03().sumPt < 0.1) { 
                   //-- opposite charge
                   if(mu1->charge() * mu2->charge() < 0) {
                     Double_t deltaR = deltaRvalue(mu1->eta(), mu2->eta(), mu1->phi(), mu2->phi());
@@ -400,6 +402,9 @@ int main(int argc, char* argv[]) {
                           muonVX_->Fill(mu2->vx());
                           muonVY_->Fill(mu2->vy());
                           muonVZ_->Fill(mu2->vz());
+
+                          MET_mumuSEL_->Fill((mets->front()).sumEt());
+
 
                           smu1 = mu1;
                           smu2 = mu2;
@@ -447,11 +452,11 @@ int main(int argc, char* argv[]) {
         float eeSumPt = -666.0;
         for(vector<Electron>::const_iterator e1 = electrons->begin(); e1 != electrons->end(); e1++) {
           //-- high pt 
-          if(e1->pt() > 20 && fabs(e1->eta()) < 2.1 && e1->dr03TkSumPt() < 0.1) { 
+          if(e1->pt() > 20 && fabs(e1->eta()) < 2.4 && e1->dr03TkSumPt() < 0.1) { 
             for(vector<Electron>::const_iterator e2 = electrons->begin(); e2 != electrons->end(); e2++) {
               //--next index 
               if(e2 > e1) {
-                if(e2->pt() > 20 && fabs(e2->eta()) < 2.1 && e2->dr03TkSumPt() < 0.1) {
+                if(e2->pt() > 20 && fabs(e2->eta()) < 2.4 && e2->dr03TkSumPt() < 0.1) {
                   //--check sort 
                   if(e1->pt() > e2->pt()) {
                     eenum0++;
@@ -479,6 +484,9 @@ int main(int argc, char* argv[]) {
                     elecVZ_->Fill(e2->vz());
                     eleciso_->Fill(e2->dr03TkSumPt());
 
+                    MET_eeSEL_->Fill((mets->front()).sumEt());
+
+
                     se1 = e1;
                     se2 = e2;
 
@@ -504,11 +512,11 @@ int main(int argc, char* argv[]) {
         float emSumPt = -666.0;
         for(vector<Electron>::const_iterator e = electrons->begin(); e != electrons->end(); e++) {
           //-- high pt 
-          if(e->pt() > 20 && fabs(e->eta()) < 2.1 && e->dr03TkSumPt() < 0.1) { 
+          if(e->pt() > 20 && fabs(e->eta()) < 2.4 && e->dr03TkSumPt() < 0.1) { 
             //--check muon
             for(vector<Muon>::const_iterator mu = muons->begin(); mu != muons->end(); mu++) {
               //--high Pt
-              if(mu->pt() > 20 && fabs(mu->eta()) < 2.1 && mu->isolationR03().sumPt < 0.1) {
+              if(mu->pt() > 20 && fabs(mu->eta()) < 2.4 && mu->isolationR03().sumPt < 0.1) {
                 //--check opposite charge 
                 if(e->charge() * mu->charge() < 0) {
                   //-- cut things in the same direction as the jets
@@ -530,6 +538,8 @@ int main(int argc, char* argv[]) {
                       elec_muonVX_->Fill(mu->vx());
                       elec_muonVY_->Fill(mu->vy());
                       elec_muonVZ_->Fill(mu->vz());
+                      
+                      MET_emuSEL_->Fill((mets->front()).sumEt());
 
                       smu = mu;
                       se = e;
@@ -548,7 +558,7 @@ int main(int argc, char* argv[]) {
         //--JET LOOP
         int n_jets = 0;
         for(vector<Jet>::const_iterator j = jets->begin(); j != jets->end(); j++) {
-          if(j->pt() > 20 && fabs(j->eta()) < 2.1) {
+          if(j->pt() > 20 && fabs(j->eta()) < 2.4) {
             n_jets++;
 
             jetPt_->Fill(j->pt());
@@ -564,7 +574,7 @@ int main(int argc, char* argv[]) {
         //-- AK8 LOOP
         int n_ak8 = 0;
         for(vector<Jet>::const_iterator ak8j1 = jets->begin(); ak8j1 != jets->end(); ak8j1++) {
-          if(ak8j1->pt() > 20 && fabs(ak8j1->eta()) < 2.1) {
+          if(ak8j1->pt() > 20 && fabs(ak8j1->eta()) < 2.4) {
             n_ak8++;
 
             AK8_jetPt_->Fill(ak8j1->pt ());
