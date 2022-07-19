@@ -6,10 +6,13 @@ void filler(TH1F* hpt1, const char * title) {
 }
 void compare(Int_t ntrain = 100) {
    const char* fname = "outputNtuple.root";
+   const char* fname2 = "Ntuple.root";
 
    TFile* input = 0;
-   if(!gSystem->AccessPathName(fname)) {
+   TFile* input2 = 0;
+   if(!gSystem->AccessPathName(fname) && !gSystem->AccessPathName(fname2)) {
       input = TFile::Open(fname);
+      input2 = TFile::Open(fname2);
    }
    else {
       printf("Cannot find the file");
@@ -19,6 +22,9 @@ void compare(Int_t ntrain = 100) {
    TTree* ee_Branch = (TTree*) input->Get("ee_Branch");
    TTree* mm_Branch = (TTree*) input->Get("mm_Branch");
    TTree* em_Branch = (TTree*) input->Get("em_Branch");
+
+   TTree* eeb_Branch = (TTree*) input2->Get("ee_Branch");
+
    TTree *simu = new TTree("MonteCarlo", "Filtered Monte Carlo Events");
 
 
@@ -50,6 +56,20 @@ void compare(Int_t ntrain = 100) {
    ee_Branch->SetBranchAddress("Nj",   &Nj_ee);
    ee_Branch->SetBranchAddress("Nak8j",&Nak8j_ee);
    ee_Branch->SetBranchAddress("missET",&missET_ee);
+
+   eeb_Branch->SetBranchAddress("pt1",  &pt1_ee);
+   eeb_Branch->SetBranchAddress("eta1", &eta1_ee);
+   eeb_Branch->SetBranchAddress("phi1", &phi1_ee);
+   eeb_Branch->SetBranchAddress("vx1",  &vx1_ee);
+   eeb_Branch->SetBranchAddress("vy1",  &vy1_ee);
+   eeb_Branch->SetBranchAddress("pt2",  &pt2_ee);
+   eeb_Branch->SetBranchAddress("eta2", &eta2_ee);
+   eeb_Branch->SetBranchAddress("phi2", &phi2_ee);
+   eeb_Branch->SetBranchAddress("vx2",  &vx2_ee);
+   eeb_Branch->SetBranchAddress("vy2",  &vy2_ee);
+   eeb_Branch->SetBranchAddress("Nj",   &Nj_ee);
+   eeb_Branch->SetBranchAddress("Nak8j",&Nak8j_ee);
+   eeb_Branch->SetBranchAddress("missET",&missET_ee);
    
    em_Branch->SetBranchAddress("pt1",  &pt1_em);
    em_Branch->SetBranchAddress("eta1", &eta1_em);
@@ -93,18 +113,22 @@ void compare(Int_t ntrain = 100) {
    simu->Branch("vy2",    &vy2_ee,    "vy2/F");
 
    simu->Branch("Nj",    &Nj_ee,    "Nj/F");
-   simu->Branch("Nak8j", &Nak8j_ee, "Nak8j/F");
+   //simu->Branch("Nak8j", &Nak8j_ee, "Nak8j/F");
    simu->Branch("missET", &missET_ee, "missET/F");
 
    simu->Branch("type",   &type,   "type/I");
 
 //
-
    Int_t i;
    type = 1;
-
    for(i = 0; i < ee_Branch->GetEntries(); i++) {
       ee_Branch->GetEntry(i);
+      simu->Fill();
+   }
+
+   type = 0;
+   for(i = 0; i < eeb_Branch->GetEntries(); i++) {
+      eeb_Branch->GetEntry(i);
       simu->Fill();
    }
 
@@ -510,7 +534,7 @@ void compare(Int_t ntrain = 100) {
    }
 
    //-- train network
-   TMultiLayerPerceptron* mlp = new TMultiLayerPerceptron("@pt1_ee,@eta1_ee,@phi1_ee,@vx1_ee,@vy1_ee,@pt2_ee,@eta2_ee,@phi2_ee,@vx2_ee,@vy2_ee,@Nj_ee,@Nak8j_ee,@missET_ee,@Nmu:5:3:type",simu,"Entry$%2","(Entry$+1)%2");
+   TMultiLayerPerceptron* mlp = new TMultiLayerPerceptron("@pt1_ee,@eta1_ee,@phi1_ee,@vx1_ee,@vy1_ee,@pt2_ee,@eta2_ee,@phi2_ee,@vx2_ee,@vy2_ee,@Nj_ee,@missET_ee:8:5:type",simu,"Entry$%2","(Entry$+1)%2");
    //TMultiLayerPerceptron* mlp = new TMultiLayerPerceptron(ee_Branch);
    mlp->Train(ntrain, "text,graph,update=10");
    mlp->Export("test", "python");
@@ -571,9 +595,5 @@ void compare(Int_t ntrain = 100) {
    legend->Draw();
    mlpa_canvas->cd(0);
    delete input;
-
-
-
-
 }
 
