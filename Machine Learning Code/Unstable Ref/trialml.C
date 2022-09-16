@@ -1,4 +1,4 @@
-//--all input, wo diagrams, all branches, seperate variables, 2 data sets, not normalize
+//--all input, with diagrams, ee mm branches, seperate variables, 2 data sets, not normalize
 
 void filler(TH1F* hpt1, const char * title) {
    hpt1->SetFillColor(kBlue);
@@ -19,9 +19,9 @@ void backgroundStyling(TH1F* hist) {
    hist->SetFillColor(kBlue);
 }
 
-void rtest(Int_t ntrain = 100) {
+void trialml(Int_t ntrain = 100) {
    const char* fname = "outputNtuple_tt.root";
-   const char* fname2 = "outputNtuple_wz.root";
+   const char* fname2 = "outputNtuple_DY.root";
 
    TFile* input = 0;
    TFile* input2 = 0;
@@ -40,9 +40,6 @@ void rtest(Int_t ntrain = 100) {
 
    TTree* mm_Branch = (TTree*) input->Get("mm_Branch");
    TTree* mmb_Branch = (TTree*) input2->Get("mm_Branch");
-
-   TTree* em_Branch = (TTree*) input->Get("em_Branch");
-   TTree* emb_Branch = (TTree*) input2->Get("em_Branch");
 
 
    TFile* ofile = new TFile("output_ML","RECREATE");
@@ -65,15 +62,6 @@ void rtest(Int_t ntrain = 100) {
    Float_t pt1_mmb, eta1_mmb, phi1_mmb, vx1_mmb, vy1_mmb;
    Float_t pt2_mmb, eta2_mmb, phi2_mmb, vx2_mmb, vy2_mmb;
    Float_t Nj_mmb, Nak8j_mmb, missET_mmb;
-
-   //--em
-   Float_t pt1_em, eta1_em, phi1_em, vx1_em, vy1_em;
-   Float_t pt2_em, eta2_em, phi2_em, vx2_em, vy2_em;
-   Float_t Nj_em, Nak8j_em, missET_em;
-
-   Float_t pt1_emb, eta1_emb, phi1_emb, vx1_emb, vy1_emb;
-   Float_t pt2_emb, eta2_emb, phi2_emb, vx2_emb, vy2_emb;
-   Float_t Nj_emb, Nak8j_emb, missET_emb;
 
    Float_t Nmu, type;
 
@@ -134,34 +122,6 @@ void rtest(Int_t ntrain = 100) {
    mmb_Branch->SetBranchAddress("Nak8j",&Nak8j_mmb);
    mmb_Branch->SetBranchAddress("missET",&missET_mmb);
 
-   em_Branch->SetBranchAddress("pt1",  &pt1_em);
-   em_Branch->SetBranchAddress("eta1", &eta1_em);
-   em_Branch->SetBranchAddress("phi1", &phi1_em);
-   em_Branch->SetBranchAddress("vx1",  &vx1_em);
-   em_Branch->SetBranchAddress("vy1",  &vy1_em);
-   em_Branch->SetBranchAddress("pt2",  &pt2_em);
-   em_Branch->SetBranchAddress("eta2", &eta2_em);
-   em_Branch->SetBranchAddress("phi2", &phi2_em);
-   em_Branch->SetBranchAddress("vx2",  &vx2_em);
-   em_Branch->SetBranchAddress("vy2",  &vy2_em);
-   em_Branch->SetBranchAddress("Nj",   &Nj_em);
-   em_Branch->SetBranchAddress("Nak8j",&Nak8j_em);
-   em_Branch->SetBranchAddress("missET",&missET_em);
-
-   emb_Branch->SetBranchAddress("pt1",  &pt1_emb);
-   emb_Branch->SetBranchAddress("eta1", &eta1_emb);
-   emb_Branch->SetBranchAddress("phi1", &phi1_emb);
-   emb_Branch->SetBranchAddress("vx1",  &vx1_emb);
-   emb_Branch->SetBranchAddress("vy1",  &vy1_emb);
-   emb_Branch->SetBranchAddress("pt2",  &pt2_emb);
-   emb_Branch->SetBranchAddress("eta2", &eta2_emb);
-   emb_Branch->SetBranchAddress("phi2", &phi2_emb);
-   emb_Branch->SetBranchAddress("vx2",  &vx2_emb);
-   emb_Branch->SetBranchAddress("vy2",  &vy2_emb);
-   emb_Branch->SetBranchAddress("Nj",   &Nj_emb);
-   emb_Branch->SetBranchAddress("Nak8j",&Nak8j_emb);
-   emb_Branch->SetBranchAddress("missET",&missET_emb);
-
 //  
 //-- simu branch
    simu->Branch("pt1",   &pt1_ee,   "pt1/F");
@@ -220,34 +180,6 @@ void rtest(Int_t ntrain = 100) {
    simu->Branch("Nak8j", &Nak8j_mmb, "Nak8j/F");
    simu->Branch("missET",&missET_mmb,"missET/F");
 
-   simu->Branch("pt1",   &pt1_em,   "pt1/F");
-   simu->Branch("eta1",  &eta1_em,  "eta1/F");
-   simu->Branch("phi1",  &phi1_em,  "phi1/F");
-   simu->Branch("vx1",   &vx1_em,   "vx1/F");
-   simu->Branch("vy1",   &vy1_em,   "vy1/F");
-   simu->Branch("pt2",   &pt2_em,   "pt2/F");
-   simu->Branch("eta2",  &eta2_em,  "eta2/F");
-   simu->Branch("phi2",  &phi2_em,  "phi2/F");
-   simu->Branch("vx2",   &vx2_em,   "vx2/F");
-   simu->Branch("vy2",   &vy2_em,   "vy2/F");
-   simu->Branch("Nj",    &Nj_em,    "Nj/F");
-   simu->Branch("Nak8j", &Nak8j_em, "Nak8j/F");
-   simu->Branch("missET",&missET_em,"missET/F");
-   
-   simu->Branch("pt1",   &pt1_emb,   "pt1/F");
-   simu->Branch("eta1",  &eta1_emb,  "eta1/F");
-   simu->Branch("phi1",  &phi1_emb,  "phi1/F");
-   simu->Branch("vx1",   &vx1_emb,   "vx1/F");
-   simu->Branch("vy1",   &vy1_emb,   "vy1/F");
-   simu->Branch("pt2",   &pt2_emb,   "pt2/F");
-   simu->Branch("eta2",  &eta2_emb,  "eta2/F");
-   simu->Branch("phi2",  &phi2_emb,  "phi2/F");
-   simu->Branch("vx2",   &vx2_emb,   "vx2/F");
-   simu->Branch("vy2",   &vy2_emb,   "vy2/F");
-   simu->Branch("Nj",    &Nj_emb,    "Nj/F");
-   simu->Branch("Nak8j", &Nak8j_emb, "Nak8j/F");
-   simu->Branch("missET",&missET_emb,"missET/F");
-
    simu->Branch("type",   &type,   "type/I");
 
 //--type signal and background: 1-signal, 0-background
@@ -275,21 +207,304 @@ void rtest(Int_t ntrain = 100) {
       mmb_Branch->GetEntry(i);
       simu->Fill();
    }
-
-   type = 1;
-   for(i = 0; i < em_Branch->GetEntries(); i++) {
-      em_Branch->GetEntry(i);
-      simu->Fill();
-   }
-
-   type = 0;
-   for(i = 0; i < em_Branch->GetEntries(); i++) {
-      emb_Branch->GetEntry(i);
-      simu->Fill();
-   }
 //
+
+//--ee
+   TH1F *hpt1_ee  = new TH1F("hpt1","pt1 distribution", 100, 0., 1200.);
+   TH1F *heta1_ee  = new TH1F("heta1","eta1 distribution", 100,-3,3);
+   TH1F *hphi1_ee  = new TH1F("hphi1","phi1 distribution", 100,-5,5);
+   TH1F *hvx1_ee  = new TH1F("hvx1","vx1 distribution", 100,-0.5,0.5);
+   TH1F *hvy1_ee  = new TH1F("hvy1","vy1 distribution", 100,-0.5,0.5);
+
+   TH1F *hpt2_ee  = new TH1F("hpt2","pt2 distribution", 100, 0., 1200.);
+   TH1F *heta2_ee  = new TH1F("heta2","eta2 distribution",100,-3,3);
+   TH1F *hphi2_ee  = new TH1F("hphi2","phi2 distribution",100,-5,5);
+   TH1F *hvx2_ee  = new TH1F("hvx2","vx2 distribution",100,-0.5,0.5);
+   TH1F *hvy2_ee  = new TH1F("hvy2","vy2 distribution",100,-0.5,0.5);
+   
+   TH1F *hNj_ee = new TH1F("hNj", "Nj distribution", 11, 0., 11.);
+   TH1F *hNak8j_ee = new TH1F("hNak8j", "Nak8j distribution", 11, 0., 11.);
+   TH1F *hmissET_ee  = new TH1F("hmissET","missET distribution",100, 0., 8000.);
+
+   
+   TH1F *hpt1_eeb  = new TH1F("hpt1b","pt1 distribution", 100, 0., 1200.);
+   TH1F *heta1_eeb  = new TH1F("heta1b","eta1 distribution", 100,-3,3);
+   TH1F *hphi1_eeb  = new TH1F("hphi1b","phi1 distribution", 100,-5,5);
+   TH1F *hvx1_eeb  = new TH1F("hvx1b","vx1 distribution", 100,-0.5,0.5);
+   TH1F *hvy1_eeb  = new TH1F("hvy1b","vy1 distribution", 100,-0.5,0.5);
+
+   TH1F *hpt2_eeb  = new TH1F("hpt2b","pt2 distribution", 100, 0., 1200.);
+   TH1F *heta2_eeb  = new TH1F("heta2b","eta2 distribution",100,-3,3);
+   TH1F *hphi2_eeb  = new TH1F("hphi2b","phi2 distribution",100,-5,5);
+   TH1F *hvx2_eeb  = new TH1F("hvx2b","vx2 distribution",100,-0.5,0.5);
+   TH1F *hvy2_eeb  = new TH1F("hvy2b","vy2 distribution",100,-0.5,0.5);
+   
+   TH1F *hNj_eeb = new TH1F("hNjb", "Nj distribution", 11, 0., 11.);
+   TH1F *hNak8j_eeb = new TH1F("hNak8jb", "Nak8j distribution", 11, 0., 11.);
+   TH1F *hmissET_eeb  = new TH1F("hmissETb","missET distribution",100, 0., 8000.);
+//
+//--mm
+   TH1F *hpt1_mm  = new TH1F("hpt1_mm","pt1 distribution", 100, 0., 1200.);
+   TH1F *heta1_mm  = new TH1F("heta1_mm","eta1 distribution",100,-3,3);
+   TH1F *hphi1_mm  = new TH1F("hphi1_mm","phi1 distribution",100,-5,5);
+   TH1F *hvx1_mm  = new TH1F("hvx1_mm","vx1 distribution",100,-0.5,0.5);
+   TH1F *hvy1_mm  = new TH1F("hvy1_mm","vy1 distribution",100,-0.5,0.5);
+
+   TH1F *hpt2_mm  = new TH1F("hpt2_mm","pt2 distribution", 100, 0., 1200.);
+   TH1F *heta2_mm  = new TH1F("heta2_mm","eta2 distribution",100,-3,3);
+   TH1F *hphi2_mm  = new TH1F("hphi2_mm","phi2 distribution",100,-5,5);
+   TH1F *hvx2_mm  = new TH1F("hvx2_mm","vx2 distribution",100,-0.5,0.5);
+   TH1F *hvy2_mm  = new TH1F("hvy2_mm","vy2 distribution",100,-0.5,0.5);
+   
+   TH1F *hNj_mm = new TH1F("hNj_mm", "Nj distribution", 11, 0., 11.);
+   TH1F *hNak8j_mm = new TH1F("hNak8j_mm", "Nak8j distribution", 11, 0., 11.);
+   TH1F *hmissET_mm  = new TH1F("hmissET_mm","missET distribution",100, 0., 8000.);
+
+   TH1F *hpt1_mmb  = new TH1F("hpt1_mmb","pt1 distribution", 100, 0., 1200.);
+   TH1F *heta1_mmb  = new TH1F("heta1_mmb","eta1 distribution",100,-3,3);
+   TH1F *hphi1_mmb  = new TH1F("hphi1_mmb","phi1 distribution",100,-5,5);
+   TH1F *hvx1_mmb  = new TH1F("hvx1_mmb","vx1 distribution",100,-0.5,0.5);
+   TH1F *hvy1_mmb  = new TH1F("hvy1_mmb","vy1 distribution",100,-0.5,0.5);
+
+   TH1F *hpt2_mmb  = new TH1F("hpt2_mmb","pt2 distribution", 100, 0., 1200.);
+   TH1F *heta2_mmb  = new TH1F("heta2_mmb","eta2 distribution",100,-3,3);
+   TH1F *hphi2_mmb  = new TH1F("hphi2_mmb","phi2 distribution",100,-5,5);
+   TH1F *hvx2_mmb  = new TH1F("hvx2_mmb","vx2 distribution",100,-0.5,0.5);
+   TH1F *hvy2_mmb  = new TH1F("hvy2_mmb","vy2 distribution",100,-0.5,0.5);
+   
+   TH1F *hNj_mmb = new TH1F("hNj_mmb", "Nj distribution", 11, 0., 11.);
+   TH1F *hNak8j_mmb = new TH1F("hNak8j_mmb", "Nak8j distribution", 11, 0., 11.);
+   TH1F *hmissET_mmb  = new TH1F("hmissET_mmb","missET distribution",100, 0., 8000.);
+
+//ee
+   TCanvas *ee_canvas = new TCanvas("ee_canvas", "ee Data", 900, 700);
+   ee_canvas->Divide(7,2,0,0);
+   Int_t ee_entries = (Int_t) ee_Branch->GetEntries();
+
+   for(Int_t i = 1; i <= 13; i++) {
+      ee_canvas->cd(i);
+      Int_t j;
+      if(i == 1) {
+         for(j = 0; j < ee_entries; j++) {
+            ee_Branch->GetEntry(j);
+            hpt1_ee->Fill(pt1_ee);
+         }
+         filler(hpt1_ee, "GeV");
+      }
+
+      if(i == 2) {
+         for(j = 0; j < ee_entries; j++) {
+            ee_Branch->GetEntry(j);
+            heta1_ee->Fill(eta1_ee);
+         }
+         filler(heta1_ee, "eta");
+      }
+
+      if(i == 3) {
+         for(j = 0; j < ee_entries; j++) {
+            ee_Branch->GetEntry(j);
+            hphi1_ee->Fill(phi1_ee);
+         }
+         filler(hphi1_ee, "rad");
+      }
+
+      if(i == 4) {
+         for(j = 0; j < ee_entries; j++) {
+            ee_Branch->GetEntry(j);
+            hvx1_ee->Fill(vx1_ee);
+         }
+         filler(hvx1_ee, "pos");
+      }
+
+      if(i == 5) {
+         for(j = 0; j < ee_entries; j++) {
+            ee_Branch->GetEntry(j);
+            hvy1_ee->Fill(vy1_ee);
+         }
+         filler(hvy1_ee, "pos");
+      }
+
+
+      if(i == 6) {
+         for(j = 0; j < ee_entries; j++) {
+            ee_Branch->GetEntry(j);
+            hpt2_ee->Fill(pt2_ee);
+         }
+         filler(hpt2_ee, "GV");
+      }
+
+      if(i == 7) {
+         for(j = 0; j < ee_entries; j++) {
+            ee_Branch->GetEntry(j);
+            heta2_ee->Fill(eta2_ee);
+         }
+         filler(heta2_ee, "eta");
+      }
+
+      if(i == 8) {
+         for(j = 0; j < ee_entries; j++) {
+            ee_Branch->GetEntry(j);
+            hphi2_ee->Fill(phi2_ee);
+         }
+         filler(hphi2_ee, "rad");
+      }
+
+      if(i == 9) {
+         for(j = 0; j < ee_entries; j++) {
+            ee_Branch->GetEntry(j);
+            hvx2_ee->Fill(vx2_ee);
+         }
+         filler(hvx2_ee, "pos");
+      }
+
+      if(i == 10) {
+         for(j = 0; j < ee_entries; j++) {
+            ee_Branch->GetEntry(j);
+            hvy2_ee->Fill(vy2_ee);
+         }
+         filler(hvy2_ee, "pos");
+      }
+
+      if(i == 11) {
+         for(j = 0; j < ee_entries; j++) {
+            ee_Branch->GetEntry(j);
+            hNj_ee->Fill(Nj_ee);
+         }
+         filler(hNj_ee, "number");
+      }
+
+      if(i == 12) {
+         for(j = 0; j < ee_entries; j++) {
+            ee_Branch->GetEntry(j);
+            hNak8j_ee->Fill(Nak8j_ee);
+         }
+         filler(hNak8j_ee, "number");
+      }
+
+      if(i == 13) {
+         for(j = 0; j < ee_entries; j++) {
+            ee_Branch->GetEntry(j);
+            hmissET_ee->Fill(missET_ee);
+         }
+         filler(hmissET_ee, "GV");
+      }
+   }
+//eeb
+   TCanvas *eeb_canvas = new TCanvas("eeb_canvas", "ee Background Data", 900, 700);
+   eeb_canvas->Divide(7,2,0,0);
+   Int_t eeb_entries = (Int_t) eeb_Branch->GetEntries();
+
+   for(Int_t i = 1; i <= 13; i++) {
+      eeb_canvas->cd(i);
+      Int_t j;
+      if(i == 1) {
+         for(j = 0; j < eeb_entries; j++) {
+            eeb_Branch->GetEntry(j);
+            hpt1_eeb->Fill(pt1_eeb);
+         }
+         filler(hpt1_eeb, "GeV");
+      }
+
+      if(i == 2) {
+         for(j = 0; j < eeb_entries; j++) {
+            eeb_Branch->GetEntry(j);
+            heta1_eeb->Fill(eta1_eeb);
+         }
+         filler(heta1_eeb, "eta");
+      }
+
+      if(i == 3) {
+         for(j = 0; j < eeb_entries; j++) {
+            eeb_Branch->GetEntry(j);
+            hphi1_eeb->Fill(phi1_eeb);
+         }
+         filler(hphi1_eeb, "rad");
+      }
+
+      if(i == 4) {
+         for(j = 0; j < eeb_entries; j++) {
+            eeb_Branch->GetEntry(j);
+            hvx1_eeb->Fill(vx1_eeb);
+         }
+         filler(hvx1_eeb, "pos");
+      }
+
+      if(i == 5) {
+         for(j = 0; j < eeb_entries; j++) {
+            eeb_Branch->GetEntry(j);
+            hvy1_eeb->Fill(vy1_eeb);
+         }
+         filler(hvy1_eeb, "pos");
+      }
+
+
+      if(i == 6) {
+         for(j = 0; j < eeb_entries; j++) {
+            eeb_Branch->GetEntry(j);
+            hpt2_eeb->Fill(pt2_eeb);
+         }
+         filler(hpt2_eeb, "GV");
+      }
+
+      if(i == 7) {
+         for(j = 0; j < eeb_entries; j++) {
+            eeb_Branch->GetEntry(j);
+            heta2_eeb->Fill(eta2_eeb);
+         }
+         filler(heta2_eeb, "eta");
+      }
+
+      if(i == 8) {
+         for(j = 0; j < eeb_entries; j++) {
+            eeb_Branch->GetEntry(j);
+            hphi2_eeb->Fill(phi2_eeb);
+         }
+         filler(hphi2_eeb, "rad");
+      }
+
+      if(i == 9) {
+         for(j = 0; j < eeb_entries; j++) {
+            eeb_Branch->GetEntry(j);
+            hvx2_eeb->Fill(vx2_eeb);
+         }
+         filler(hvx2_eeb, "pos");
+      }
+
+      if(i == 10) {
+         for(j = 0; j < eeb_entries; j++) {
+            eeb_Branch->GetEntry(j);
+            hvy2_eeb->Fill(vy2_eeb);
+         }
+         filler(hvy2_eeb, "pos");
+      }
+
+      if(i == 11) {
+         for(j = 0; j < eeb_entries; j++) {
+            eeb_Branch->GetEntry(j);
+            hNj_eeb->Fill(Nj_eeb);
+         }
+         filler(hNj_eeb, "number");
+      }
+
+      if(i == 12) {
+         for(j = 0; j < eeb_entries; j++) {
+            eeb_Branch->GetEntry(j);
+            hNak8j_eeb->Fill(Nak8j_eeb);
+         }
+         filler(hNak8j_eeb, "number");
+      }
+
+      if(i == 13) {
+         for(j = 0; j < eeb_entries; j++) {
+            eeb_Branch->GetEntry(j);
+            hmissET_eeb->Fill(missET_eeb);
+         }
+         filler(hmissET_eeb, "GV");
+      }
+   }
    
    //-- train NN
+   //TMultiLayerPerceptron* mlp = new TMultiLayerPerceptron("pt1,eta1,phi1,vx1:6::type",simu);
    TMultiLayerPerceptron *mlp = new TMultiLayerPerceptron("@pt1,@eta1,@phi1,@vx1,@vy1,@pt2,@eta2,@phi2,@vx2,@vy2,@Nj,@Nak8j,@missET:8:6:@type",simu,"Entry$%2","(Entry$+1)%2");   
    mlp->Train(ntrain, "text,graph,update=10");
    mlp->Export("test", "python");
@@ -323,15 +538,10 @@ void rtest(Int_t ntrain = 100) {
    TH1F* MLPmm = new TH1F("MLPmmh", "NNm output", 50, -.5, 1.5);
    TH1F* MLPmmb = new TH1F("MLPmmbh", "NNmb output", 50, -.5, 1.5);
 
-   TH1F* MLPem = new TH1F("MLPemh", "NNem output", 50, -.5, 1.5);
-   TH1F* MLPemb = new TH1F("MLPembh", "NNemb output", 50, -.5, 1.5);
-
    MLPee->SetDirectory(0);
    MLPeeb->SetDirectory(0);
    MLPmm->SetDirectory(0);
    MLPmmb->SetDirectory(0);
-   MLPem->SetDirectory(0);
-   MLPemb->SetDirectory(0);
    
 //--feeding to NN
 //--ee
@@ -417,80 +627,28 @@ void rtest(Int_t ntrain = 100) {
       MLPmmb->Fill(mlp->Evaluate(0, paramsmmb));
    } 
 //
-
-
-//--em
-   Double_t paramsem[13];
-   Double_t paramsemb[13];
-   for(i = 0; i < em_Branch->GetEntries(); i++) {
-      em_Branch->GetEntry(i);
-
-      paramsem[0] = pt1_em;
-      paramsem[1] = eta1_em;
-      paramsem[2] = phi1_em;
-      paramsem[3] = vx1_em;
-      paramsem[4] = vy1_em;
-      paramsem[5] = pt2_em;
-      paramsem[6] = eta2_em;
-      paramsem[7] = phi2_em;
-      paramsem[8] = vx2_em;
-      paramsem[9] = vy2_em;
-      paramsem[10] = Nj_em;
-      paramsem[11] = Nak8j_em;
-      paramsem[12] = missET_em;
-      MLPem->Fill(mlp->Evaluate(1, paramsem));
-   }
-//
-//--emb
-   for(i = 0; i < emb_Branch->GetEntries(); i++) {
-      emb_Branch->GetEntry(i);
-
-      paramsemb[0] = pt1_emb;
-      paramsemb[1] = eta1_emb;
-      paramsemb[2] = phi1_emb;
-      paramsemb[3] = vx1_emb;
-      paramsemb[4] = vy1_emb;
-      paramsemb[5] = pt2_emb;
-      paramsemb[6] = eta2_emb;
-      paramsemb[7] = phi2_emb;
-      paramsemb[8] = vx2_emb;
-      paramsemb[9] = vy2_emb;
-      paramsemb[10] = Nj_emb;
-      paramsemb[11] = Nak8j_emb;
-      paramsemb[12] = missET_emb;
-      MLPemb->Fill(mlp->Evaluate(0, paramsemb));
-   }
-//
    signalStyling(MLPee);
    backgroundStyling(MLPeeb);
    signalStyling(MLPmm);
    backgroundStyling(MLPmmb);
-   signalStyling(MLPem);
-   backgroundStyling(MLPemb);
 
    MLPee->SetStats(0);
    MLPeeb->SetStats(0);
 
    MLPmm->SetStats(0);
    MLPmmb->SetStats(0);
-
-   MLPem->SetStats(0);
-   MLPemb->SetStats(0);
    
    MLPee->Draw();
    MLPeeb->Draw("same");
+
    MLPmm->Draw("same");
    MLPmmb->Draw("same");
-   MLPem->Draw("same");
-   MLPemb->Draw("same");
 
    TLegend *legend = new TLegend(.75, .80, .95, .95);
    legend->AddEntry(MLPee, "ee");
    legend->AddEntry(MLPeeb, "eeb");
    legend->AddEntry(MLPmm, "mm");
    legend->AddEntry(MLPmmb, "mmb");
-   legend->AddEntry(MLPem, "em");
-   legend->AddEntry(MLPemb, "emb");
    legend->Draw();
    mlpa_canvas->cd(0);
 
