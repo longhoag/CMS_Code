@@ -23,7 +23,7 @@ void backgroundStyling(TH1F* hist) {
 
 void mmtestpar(Int_t ntrain = 100) {
    const char* fname = "outputNtuple_tt.root";
-   const char* fname2 = "outputNtuple_DY.root";
+   const char* fname2 = "outputNtuple_ww.root";
 
    TFile* input = 0;
    TFile* input2 = 0;
@@ -107,7 +107,7 @@ void mmtestpar(Int_t ntrain = 100) {
    
 
    //-- train NN
-   TMultiLayerPerceptron *mlp = new TMultiLayerPerceptron("@pt1,@eta1,@phi1,@pt2,@eta2,@phi2,@Nak8j,@missET:5:3:type",simu,"Entry$%2", "(Entry$%2)==0");   
+   TMultiLayerPerceptron *mlp = new TMultiLayerPerceptron("@pt1,@eta1,@phi1,@pt2,@eta2,@phi2,@Nak8j,@missET:5:3:type",simu,"Entry$%2", "(Entry$+1)%2");   
    mlp->Train(ntrain, "text,graph,update=10");
    mlp->Export("test", "python");
 
