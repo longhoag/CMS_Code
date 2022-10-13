@@ -223,15 +223,19 @@ int main(int argc, char* argv[]) {
   TH1F* AK8_jetVY_ = dir.make<TH1F>("AK8_jetVY", "vy",  100,  -0.5,  0.5);
   TH1F* AK8_jetVZ_ = dir.make<TH1F>("AK8_jetVZ", "vz",  100,  -0.5,  0.5);
   TH1F* AK8_Njets_all_ = dir.make<TH1F>("AK8_Njets_all_", "AK8_Njets", 11, 0., 11.);
+  //--
+  TH1F* AK8_Njets_ee_ = dir.make<TH1F>("AK8_Njets_ee_", "AK8_Njets_ee", 11, 0., 11.);
+  TH1F* AK8_Njets_mm_ = dir.make<TH1F>("AK8_Njets_mm_", "AK8_Njets_mm", 11, 0., 11.);
+  TH1F* AK8_Njets_em_ = dir.make<TH1F>("AK8_Njets_em_", "AK8_Njets_em", 11, 0., 11.);
 
-  TH1F* DeltaR_elec_ = dir.make<TH1F>("DeltaR_Elec", "R", 100, 0., 10.); 
+  TH1F* DeltaR_elec_ = dir.make<TH1F>("DeltaR_Elec", "R", 100, 0., 10.);
   TH1F* DeltaR_muon_ = dir.make<TH1F>("DeltaR_Muon", "R", 100, 0., 10.);
 
   TH1F* N_Gen_b_ = dir.make<TH1F>("Generator_b", "number", 15, 0., 15.);
 
   //--2D plot
-  TH2F* MET_eeSel_Jet_ = dir.make<TH2F>("MET_eeSel_Jet_", "eeMET_Njets", 100,  0.,  4000., 11, 0 , 11);
-  TH2F* MET_mumuSel_Jet_ = dir.make<TH2F>("MET_mumuSel_Jet_", "mumuMET_Njets", 100,  0.,  4000., 11, 0 , 11);  
+  TH2F* MET_eeSel_Jet_ = dir.make<TH2F>("MET_eeSel_Jet_", "eeMET_Njets", 100,  0.,  2500., 11, 0 , 11);
+  TH2F* MET_mumuSel_Jet_ = dir.make<TH2F>("MET_mumuSel_Jet_", "mumuMET_Njets", 100,  0.,  2500., 11, 0 , 11);  
 
   //-NTuple file/branches
   TFile* ofile = new TFile(outputNtuple_.c_str(),"RECREATE");
@@ -349,7 +353,7 @@ int main(int argc, char* argv[]) {
               //-- b-tag
               if(abs(jet1->hadronFlavour()) == 5 && abs(jet2->hadronFlavour()) == 5) {
                 //--opposite charge
-                if(jet1->charge() * jet2->charge() < 0) {
+                if(jet1->charge() * jet2->charge() < 0 || b > 1) {
                   b_pair++;
                 }
               }
@@ -358,7 +362,7 @@ int main(int argc, char* argv[]) {
         }
 
         //--at least 2 b tag w/ opposite sign  
-        if(b_pair > 0) {
+        if(true) {//b_pair > 0) {
           float mmSumPt = -666.0;
           for(vector<Muon>::const_iterator mu1 = muons->begin(); mu1 != muons->end(); mu1++) {
             //--plotting
@@ -370,6 +374,7 @@ int main(int argc, char* argv[]) {
             before_muonVZ_->Fill(mu1->vz());
           }
           
+          int n_ak8_mm = 0;
           //-- get 2 highest pt and oposite charges 
           for(vector<Muon>::const_iterator mu1 = muons->begin(); mu1 != muons->end(); mu1++) {
             //-- high Pt
@@ -394,6 +399,7 @@ int main(int argc, char* argv[]) {
                         for(vector<Jet>::const_iterator jet = jets->begin(); jet != jets->end(); jet++) {
                         Double_t muon1jet = deltaRvalue(mu1->eta(), jet->eta(), mu1->phi(), jet->phi());
                         Double_t muon2jet = deltaRvalue(mu2->eta(), jet->eta(), mu2->phi(), jet->phi());
+
                         //-- cut that matched 
                           if(muon1jet > 0.2 && muon2jet > 0.2) {
                             //muojet++;
@@ -423,6 +429,13 @@ int main(int argc, char* argv[]) {
 
                             mmSumPt = mu1->pt() + mu2->pt();
 
+                            for(vector<Jet>::const_iterator jet = jets->begin(); jet != jets->end(); jet++) {
+                              if(jet->pt() > 20 && fabs(jet->eta()) < 2.4) {
+                                n_ak8_mm++;
+                              }
+                            }
+                            AK8_Njets_mm_->Fill(n_ak8_mm);
+
                             for (vector<GenParticle>::const_iterator gp = genParticles->begin(); gp != genParticles->end(); ++gp) {
                               const Candidate *p = (const Candidate*)&(*gp);
                               //-- vs muon gen delta R
@@ -451,10 +464,12 @@ int main(int argc, char* argv[]) {
           }
           Nmuons_all_->Fill(n_muons);
           Nmuons_mumuSEL_->Fill(diMuon);
+          
 
           //-- loop ELECTRON collections
           int n_electrons = 0;
           int diElectron = 0;
+          int n_ak8_ee = 0;
 
           float eeSumPt = -666.0;
           for(vector<Electron>::const_iterator e1 = electrons->begin(); e1 != electrons->end(); e1++) {
@@ -473,38 +488,56 @@ int main(int argc, char* argv[]) {
                     }
                     //--check opposite charge 
                     if(e1->charge() * e2->charge() < 0) {
-                      diElectron++;
+                      Double_t deltaR = deltaRvalue(e1->eta(), e2->eta(), e1->phi(), e2->phi());
+                      if(deltaR > 0.3) {
+                        //-- vs jet pat delta R
+                        for(vector<Jet>::const_iterator jet = jets->begin(); jet != jets->end(); jet++) {
+                          Double_t e1jet = deltaRvalue(e1->eta(), jet->eta(), e1->phi(), jet->phi());
+                          Double_t e2jet = deltaRvalue(e2->eta(), jet->eta(), e2->phi(), jet->phi());
+                          if(e1jet > 0.2 && e2jet > 0.2) {
+                            diElectron++;
 
-                      elecPt_->Fill(e1->pt());
-                      elecEta_->Fill(e1->eta());
-                      elecPhi_->Fill(e1->phi());	
-                      elecVX_->Fill(e1->vx());
-                      elecVY_->Fill(e1->vy());
-                      elecVZ_->Fill(e1->vz());
-                      eleciso_->Fill(e1->dr03TkSumPt());
-                            
-                      elecPt_->Fill(e2->pt());
-                      elecEta_->Fill(e2->eta());
-                      elecPhi_->Fill(e2->phi());	
-                      elecVX_->Fill(e2->vx());
-                      elecVY_->Fill(e2->vy());
-                      elecVZ_->Fill(e2->vz());
-                      eleciso_->Fill(e2->dr03TkSumPt());
+                            elecPt_->Fill(e1->pt());
+                            elecEta_->Fill(e1->eta());
+                            elecPhi_->Fill(e1->phi());	
+                            elecVX_->Fill(e1->vx());
+                            elecVY_->Fill(e1->vy());
+                            elecVZ_->Fill(e1->vz());
+                            eleciso_->Fill(e1->dr03TkSumPt());
+                                  
+                            elecPt_->Fill(e2->pt());
+                            elecEta_->Fill(e2->eta());
+                            elecPhi_->Fill(e2->phi());	
+                            elecVX_->Fill(e2->vx());
+                            elecVY_->Fill(e2->vy());
+                            elecVZ_->Fill(e2->vz());
+                            eleciso_->Fill(e2->dr03TkSumPt());
 
-                      MET_eeSEL_->Fill((mets->front()).sumEt());
+                            MET_eeSEL_->Fill((mets->front()).sumEt());
 
 
-                      se1 = e1;
-                      se2 = e2;
+                            se1 = e1;
+                            se2 = e2;
 
-                      eeSumPt = e1->pt() + e2->pt();
+                            eeSumPt = e1->pt() + e2->pt();
 
-                      Double_t del = deltaRvalue(e1->eta(), e2->eta(), e1->phi(), e2->phi());
+                            Double_t del = deltaRvalue(e1->eta(), e2->eta(), e1->phi(), e2->phi());
 
-                      if(del > 2.4) {
-                        DeltaR_elec_->Fill(del);
+                            for(vector<Jet>::const_iterator jet = jets->begin(); jet != jets->end(); jet++) {
+                              if(jet->pt() > 20 && fabs(jet->eta()) < 2.4) {
+                                n_ak8_ee++;
+                              }
+                            }
+                            AK8_Njets_ee_->Fill(n_ak8_ee);
+                            MET_eeSel_Jet_->Fill((mets->front()).sumEt(), n_ak8_ee);
+
+                            if(del > 2.4) {
+                              DeltaR_elec_->Fill(del);
+                            }
+                            break;
+                          }
+                        }
                       }
-                      break;
                     }
                   }
                 }
@@ -514,9 +547,11 @@ int main(int argc, char* argv[]) {
           Nelectrons_all_->Fill(n_electrons);
           Nelectrons_eeSEL_->Fill(diElectron);
           
+          
           //-- loop electron and muon collection 
           int diElecMuon = 0;
           float emSumPt = -666.0;
+          int n_ak8_em = 0;
           for(vector<Electron>::const_iterator e = electrons->begin(); e != electrons->end(); e++) {
             //-- high pt 
             if(e->pt() > 20 && fabs(e->eta()) < 2.4 && e->dr03TkSumPt() < 0.1) { 
@@ -552,6 +587,13 @@ int main(int argc, char* argv[]) {
                         se = e;
                         
                         emSumPt = e->pt() + mu->pt();
+
+                        for(vector<Jet>::const_iterator jet = jets->begin(); jet != jets->end(); jet++) {
+                          if(jet->pt() > 20 && fabs(jet->eta()) < 2.4) {
+                            n_ak8_em++;
+                          }
+                        }
+                        AK8_Njets_em_->Fill(n_ak8_em);
                         
                         break;
                       }
@@ -561,6 +603,7 @@ int main(int argc, char* argv[]) {
               }
             }
           }
+          
 
           //--JET LOOP
           int n_jets = 0;
@@ -652,26 +695,26 @@ int main(int argc, char* argv[]) {
           // }
 
           //--2D plot
-          for(vector<Electron>::const_iterator e = electrons->begin(); e != electrons->end(); e++) {
-            //-- high pt
-            if(e->pt() > 20 && fabs(e->eta()) < 2.4 && e->dr03TkSumPt() < 0.1) {
-              //--check muon
-              for(vector<Muon>::const_iterator mu = muons->begin(); mu != muons->end(); mu++) {
-                //--high Pt
-                if(mu->pt() > 20 && fabs(mu->eta()) < 2.4 && mu->isolationR03().sumPt < 0.1) {
-                  //--Check Jets
-                  int n_jet = 0;
-                  for(vector<Jet>::const_iterator j1 = jets->begin(); j1 != jets->end(); j1++){
-                    if(j1->pt() > 20 && fabs(j1->eta()) < 2.4){
-                      n_jet++;
-                    }
-                    MET_eeSel_Jet_->Fill((mets->front()).sumEt(), n_jet);
-                    MET_mumuSel_Jet_->Fill((mets->front()).sumEt(), n_jet);
-                  }
-                }
-              }
-            }
-          }
+          // for(vector<Electron>::const_iterator e = electrons->begin(); e != electrons->end(); e++) {
+          //   //-- high pt
+          //   if(e->pt() > 20 && fabs(e->eta()) < 2.4 && e->dr03TkSumPt() < 0.1) {
+          //     //--check muon
+          //     for(vector<Muon>::const_iterator mu = muons->begin(); mu != muons->end(); mu++) {
+          //       //--high Pt
+          //       if(mu->pt() > 20 && fabs(mu->eta()) < 2.4 && mu->isolationR03().sumPt < 0.1) {
+          //         //--Check Jets
+          //         int n_jet = 0;
+          //         for(vector<Jet>::const_iterator j1 = jets->begin(); j1 != jets->end(); j1++){
+          //           if(j1->pt() > 20 && fabs(j1->eta()) < 2.4){
+          //             n_jet++;
+          //           }
+          //           MET_eeSel_Jet_->Fill((mets->front()).sumEt(), n_jet);
+          //           MET_mumuSel_Jet_->Fill((mets->front()).sumEt(), n_jet);
+          //         }
+          //       }
+          //     }
+          //   }
+          // }
 
           //-- for MCTruthDeltaRMatcher muons
           for (vector<GenParticle>::const_iterator gp = genParticles->begin(); gp != genParticles->end(); ++gp) {
@@ -690,15 +733,15 @@ int main(int argc, char* argv[]) {
           string highest = highestPtCombination(mmSumPt, eeSumPt, emSumPt);
           if(highest == "mm") {
             mm++;
-            mm_Branch->Fill(smu1->pt(),smu1->eta(),smu1->phi(),smu1->vx(),smu1->vy(),smu2->pt(),smu2->eta(),smu2->phi(),smu2->vx(),smu2->vy(),n_jets,n_ak8,(mets->front()).sumEt());
+            mm_Branch->Fill(smu1->pt(),smu1->eta(),smu1->phi(),smu1->vx(),smu1->vy(),smu2->pt(),smu2->eta(),smu2->phi(),smu2->vx(),smu2->vy(),n_jets,n_ak8_mm,(mets->front()).sumEt());
           }
           else if(highest == "ee") {
             ee++;
-            ee_Branch->Fill(se1->pt(),se1->eta(),se1->phi(),se1->vx(),se1->vy(),se2->pt(),se2->eta(),se2->phi(),se2->vx(),se2->vy(),n_jets,n_ak8,(mets->front()).sumEt());
+            ee_Branch->Fill(se1->pt(),se1->eta(),se1->phi(),se1->vx(),se1->vy(),se2->pt(),se2->eta(),se2->phi(),se2->vx(),se2->vy(),n_jets,n_ak8_ee,(mets->front()).sumEt());
           }
           else if(highest == "em") {
             em++;
-            em_Branch->Fill(se->pt(),se->eta(),se->phi(),se->vx(),se->vy(),smu->pt(),smu->eta(),smu->phi(),smu->vx(),smu->vy(),n_jets,n_ak8,(mets->front()).sumEt());    
+            em_Branch->Fill(se->pt(),se->eta(),se->phi(),se->vx(),se->vy(),smu->pt(),smu->eta(),smu->phi(),smu->vx(),smu->vy(),n_jets,n_ak8_em,(mets->front()).sumEt());    
           }
           else if(highest == "invalid") {
             invalid++;
