@@ -362,7 +362,7 @@ int main(int argc, char* argv[]) {
         }
 
         //--at least 2 b tag w/ opposite sign  
-        if(true) {//b_pair > 0) {
+        if(b_pair > 0) {//b_pair > 0) {
           float mmSumPt = -666.0;
           for(vector<Muon>::const_iterator mu1 = muons->begin(); mu1 != muons->end(); mu1++) {
             //--plotting
@@ -470,6 +470,7 @@ int main(int argc, char* argv[]) {
           int n_electrons = 0;
           int diElectron = 0;
           int n_ak8_ee = 0;
+          
 
           float eeSumPt = -666.0;
           for(vector<Electron>::const_iterator e1 = electrons->begin(); e1 != electrons->end(); e1++) {
@@ -491,50 +492,54 @@ int main(int argc, char* argv[]) {
                       Double_t deltaR = deltaRvalue(e1->eta(), e2->eta(), e1->phi(), e2->phi());
                       if(deltaR > 0.3) {
                         //-- vs jet pat delta R
+                        int coLinear = 0;
                         for(vector<Jet>::const_iterator jet = jets->begin(); jet != jets->end(); jet++) {
                           Double_t e1jet = deltaRvalue(e1->eta(), jet->eta(), e1->phi(), jet->phi());
                           Double_t e2jet = deltaRvalue(e2->eta(), jet->eta(), e2->phi(), jet->phi());
-                          if(e1jet > 0.2 && e2jet > 0.2) {
-                            diElectron++;
-
-                            elecPt_->Fill(e1->pt());
-                            elecEta_->Fill(e1->eta());
-                            elecPhi_->Fill(e1->phi());	
-                            elecVX_->Fill(e1->vx());
-                            elecVY_->Fill(e1->vy());
-                            elecVZ_->Fill(e1->vz());
-                            eleciso_->Fill(e1->dr03TkSumPt());
-                                  
-                            elecPt_->Fill(e2->pt());
-                            elecEta_->Fill(e2->eta());
-                            elecPhi_->Fill(e2->phi());	
-                            elecVX_->Fill(e2->vx());
-                            elecVY_->Fill(e2->vy());
-                            elecVZ_->Fill(e2->vz());
-                            eleciso_->Fill(e2->dr03TkSumPt());
-
-                            MET_eeSEL_->Fill((mets->front()).sumEt());
-
-
-                            se1 = e1;
-                            se2 = e2;
-
-                            eeSumPt = e1->pt() + e2->pt();
-
-                            Double_t del = deltaRvalue(e1->eta(), e2->eta(), e1->phi(), e2->phi());
-
-                            for(vector<Jet>::const_iterator jet = jets->begin(); jet != jets->end(); jet++) {
-                              if(jet->pt() > 20 && fabs(jet->eta()) < 2.4) {
-                                n_ak8_ee++;
-                              }
-                            }
-                            AK8_Njets_ee_->Fill(n_ak8_ee);
-                            MET_eeSel_Jet_->Fill((mets->front()).sumEt(), n_ak8_ee);
-
-                            if(del > 2.4) {
-                              DeltaR_elec_->Fill(del);
-                            }
+                          if(e1jet < 0.2 && e2jet < 0.2) {
+                            coLinear = 1;
                             break;
+                          }
+                        }
+
+                        if (coLinear == 0) {
+                          diElectron++;
+
+                          elecPt_->Fill(e1->pt());
+                          elecEta_->Fill(e1->eta());
+                          elecPhi_->Fill(e1->phi());	
+                          elecVX_->Fill(e1->vx());
+                          elecVY_->Fill(e1->vy());
+                          elecVZ_->Fill(e1->vz());
+                          eleciso_->Fill(e1->dr03TkSumPt());
+                                
+                          elecPt_->Fill(e2->pt());
+                          elecEta_->Fill(e2->eta());
+                          elecPhi_->Fill(e2->phi());	
+                          elecVX_->Fill(e2->vx());
+                          elecVY_->Fill(e2->vy());
+                          elecVZ_->Fill(e2->vz());
+                          eleciso_->Fill(e2->dr03TkSumPt());
+
+                          MET_eeSEL_->Fill((mets->front()).sumEt());
+
+                          se1 = e1;
+                          se2 = e2;
+
+                          eeSumPt = e1->pt() + e2->pt();
+
+                          Double_t del = deltaRvalue(e1->eta(), e2->eta(), e1->phi(), e2->phi());
+
+                          for(vector<Jet>::const_iterator jet = jets->begin(); jet != jets->end(); jet++) {
+                            if(jet->pt() > 20 && fabs(jet->eta()) < 2.4) {
+                              n_ak8_ee++;
+                            }
+                          }
+                          AK8_Njets_ee_->Fill(n_ak8_ee);
+                          MET_eeSel_Jet_->Fill((mets->front()).sumEt(), n_ak8_ee);
+
+                          if(del > 2.4) {
+                            DeltaR_elec_->Fill(del);
                           }
                         }
                       }
